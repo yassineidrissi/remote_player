@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+      <title>HTML Login Form</title>
+      <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+
+<body>
+      <div class="main">
+            <h1>PingPong</h1>
+            <h3>Enter your login credentials</h3>
+            <form action="" method="post">
+                {% csrf_token %}
+                <!-- {{ lf }} -->
+                  <label for="first">
+                        Username:
+                  </label>
+                  <input type="text" id="username" name="username" placeholder="Enter your Username" required>
+                  <label for="password">
+                        Password:
+                  </label>
+                  <input type="password" id="password" name="password" placeholder="Enter your Password" required>
+
+                  <div class="wrap">
+                        <button type="submit"
+                                onclick="solve()">
+                              Submit
+                        </button>
+                  </div>
+            </form>
+            <p>Not registered?
+                  <a href="{% url 'signup' %}"
+                     style="text-decoration: none;">
+                        Create an account
+                  </a>
+            </p>
+            <p style="color: red;">{{error}}</p>
+      </div>
+</body>
+
+</html>

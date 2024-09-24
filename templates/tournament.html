@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament Champion</title>
+    <link rel="stylesheet" href="{% static 'css/tournament.css' %}">
+</head>
+<body>
+    <div class="container" id="user-box">
+        <h1>Users had Joined </h1>
+        {% for plr in players %}
+            <div class="user {{plr.username}}">
+                <h2>{{plr.username}} has joined the room</h2>
+            </div>
+        {% endfor %}
+    </div>
+    {{tournament_id|json_script:"tournament_id"}}
+    <script src="{% static 'js/tournament.js' %}"></script>
+</body>
+</html>
