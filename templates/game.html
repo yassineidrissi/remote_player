@@ -118,6 +118,10 @@
 
         let isSinglePlayer = false;
 
+        // Establish a WebSocket connection to the server
+        // var socket = new WebSocket('ws://localhost:8000/ws/game/');
+
+        
         function drawPaddle(paddle) {
             ctx.fillStyle = 'white';
             ctx.fillRect(paddle.x, paddle.y, paddleWidth, paddleHeight);

@@ -2,6 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from asgiref.sync import sync_to_async
+from channels.generic.websocket import WebsocketConsumer
 # from .models import Room, Player
 
 
@@ -153,6 +154,28 @@ class RoomConsumer(AsyncWebsocketConsumer):
             'room_id': room_id,
             'matches': data,
             'rooms': data_rooms
+        }))
+
+
+class PingPongConsumer(WebsocketConsumer):
+    def connect(self):
+        # Accept the WebSocket connection
+        self.accept()
+
+    def disconnect(self, close_code):
+        # Handle WebSocket disconnection
+        pass
+
+    def receive(self, text_data):
+        # Receive message from WebSocket
+        data = json.loads(text_data)
+        left_score = data['leftScore']
+        right_score = data['rightScore']
+
+        # Broadcast the updated scores to all clients
+        self.send(json.dumps({
+            'leftScore': left_score,
+            'rightScore': right_score,
         }))
 
 
