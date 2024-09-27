@@ -178,6 +178,54 @@ class PingPongConsumer(WebsocketConsumer):
             'rightScore': right_score,
         }))
 
+class GameRoomConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['user']
+        self.room_group_name = 'game_room'
+        
+        # Join the room group
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        
+        # Accept WebSocket connection
+        await self.accept()
+    
+    async def disconnect(self, close_code):
+        # Leave the room group
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+    
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        left_score = data['leftScore']
+        right_score = data['rightScore']
+
+        # Broadcast the updated score to the room group
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'update_score',
+                'leftScore': left_score,
+                'rightScore': right_score,
+            }
+        )
+    
+    # Receive score updates from the room group and send to WebSocket
+    async def update_score(self, event):
+        left_score = event['leftScore']
+        right_score = event['rightScore']
+
+        # Send the score to WebSocket
+        await self.send(text_data=json.dumps({
+            'leftScore': left_score,
+            'rightScore': right_score
+        }))
+
+
 
 # class TournamentConsumer(AsyncWebsocketConsumer):
 #     async def connect(self):

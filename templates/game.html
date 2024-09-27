@@ -119,8 +119,26 @@
         let isSinglePlayer = false;
 
         // Establish a WebSocket connection to the server
-        // var socket = new WebSocket('ws://localhost:8000/ws/game/');
+        var socket = new WebSocket('ws://localhost:8000/ws/game/');
 
+        // Listen for messges from the server
+        socket.onmessage = function (event) {
+            var data = JSON.parse(event.data);
+
+            //update the scores when the server sends new scores
+            leftPaddle.score = data.leftScore;
+            rightPaddle.score = data.rightScore;
+            updateScore();
+
+        };
+
+        // Send score updates to the server
+        function sendScoreUpdate() {
+            socket.send(JSON.stringify({
+        'leftScore': leftPaddle.score,
+        'rightScore': rightPaddle.score,
+         }));
+        }
         
         function drawPaddle(paddle) {
             ctx.fillStyle = 'white';
@@ -135,6 +153,8 @@
         function updateScore() {
             document.getElementById('leftScore').textContent = leftPaddle.score;
             document.getElementById('rightScore').textContent = rightPaddle.score;
+
+            // sendScoreUpdate();
         }
 
         function movePaddles() {
@@ -179,15 +199,18 @@
             if (ballX < 0) {
                 rightPaddle.score++;
                 resetBall();
+                sendScoreUpdate();  // Send updated score to server
             }
 
             if (ballX > canvas.width) {
                 leftPaddle.score++;
                 resetBall();
+                sendScoreUpdate();  // Send updated score to server
             }
 
-            updateScore();
+            updateScore();  // Update the UI score
         }
+
 
         function resetBall() {
             ballX = canvas.width / 2;
