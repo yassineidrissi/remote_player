@@ -75,8 +75,8 @@
 
 <body>
     <div class="mode-buttons">
-        <!-- <button id="multiplayerButton">Multiplayer Mode</button> -->
-        <button id="singleplayerButton">Single Player Mode</button>
+        <button id="multiplayerButton">Multiplayer Mode</button>
+        <!-- <button id="singleplayerButton">Single Player Mode</button> -->
     </div>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
     <div id="leftScore" class="score">0</div>
@@ -119,26 +119,26 @@
         // let isSinglePlayer = false;
 
         // Establish a WebSocket connection to the server
-        var socket = new WebSocket('ws://localhost:8000/ws/game/');
+        // var socket = new WebSocket('ws://localhost:8000/ws/game/');
 
         // Listen for messges from the server
-        socket.onmessage = function (event) {
-            var data = JSON.parse(event.data);
+        // socket.onmessage = function (event) {
+        //     var data = JSON.parse(event.data);
 
-            //update the scores when the server sends new scores
-            leftPaddle.score = data.leftScore;
-            rightPaddle.score = data.rightScore;
-            updateScore();
+        //     //update the scores when the server sends new scores
+        //     leftPaddle.score = data.leftScore;
+        //     rightPaddle.score = data.rightScore;
+        //     updateScore();
 
-        };
+        // };
 
         // Send score updates to the server
-        function sendScoreUpdate() {
-            socket.send(JSON.stringify({
-        'leftScore': leftPaddle.score,
-        'rightScore': rightPaddle.score,
-         }));
-        }
+        // function sendScoreUpdate() {
+        //     socket.send(JSON.stringify({
+        // 'leftScore': leftPaddle.score,
+        // 'rightScore': rightPaddle.score,
+        //  }));
+        // }
         
         function drawPaddle(paddle) {
             ctx.fillStyle = 'white';
@@ -164,11 +164,11 @@
             if (leftPaddle.moveDown && leftPaddle.y < canvas.height - paddleHeight) {
                 leftPaddle.y += leftPaddle.speed;
             }
-            if (rightPaddle.moveUp && rightPaddle.y > 0) {
-                rightPaddle.y -= rightPaddle.speed;
-            }
-            if (rightPaddle.moveDown && rightPaddle.y < canvas.height - paddleHeight) {
+            // Simple AI for the robot
+            if (ballY > rightPaddle.y + paddleHeight / 2 && rightPaddle.y < canvas.height - paddleHeight) {
                 rightPaddle.y += rightPaddle.speed;
+            } else if (ballY < rightPaddle.y + paddleHeight / 2 && rightPaddle.y > 0) {
+                rightPaddle.y -= rightPaddle.speed;
             }
         }
 
@@ -222,25 +222,22 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'w') leftPaddle.moveUp = true;
             if (e.key === 's') leftPaddle.moveDown = true;
-            if (e.key === 'ArrowUp') rightPaddle.moveUp = true;
-            if (e.key === 'ArrowDown') rightPaddle.moveDown = true;
         });
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'w') leftPaddle.moveUp = false;
             if (e.key === 's') leftPaddle.moveDown = false;
-            if (e.key === 'ArrowUp') rightPaddle.moveUp = false;
-            if (e.key === 'ArrowDown') rightPaddle.moveDown = false;
         });
 
-        // document.getElementById('multiplayerButton').addEventListener('click', () => {
+        document.getElementById('multiplayerButton').addEventListener('click', () => {
+            // isSinglePlayer = false;
+            // resetGame();
+        });
+
+        // document.getElementById('singleplayerButton').addEventListener('click', () => {
+        //     isSinglePlayer = true;
         //     resetGame();
         // });
-        
-        document.getElementById('singleplayerButton').addEventListener('click', () => {
-            //!need to add link to gamesingle.html
-            resetGame();
-        });
 
         function resetGame() {
             leftPaddle.score = 0;
