@@ -136,6 +136,18 @@
         socket.onmessage = function (event) {
             var data = JSON.parse(event.data);
             
+            if (data.playerCount !== undefined) {
+                console.log('Player count:', data.playerCount);
+                document.getElementById('playerCountDisplay').textContent = 'Players Connected: ' + data.playerCount;
+
+                // If two players are connected, start the game
+                if (data.playerCount === 2 && !gameStarted) {
+                    waitingMessage.style.display = 'none';  // Hide waiting message
+                    gameStarted = true;
+                    gameLoop();  // Start the game loop
+                }
+            }
+
             // Update the scores when the server sends new scores
             if (data.leftScore !== undefined && data.rightScore !== undefined) {
                 leftPaddle.score = data.leftScore;
@@ -250,9 +262,9 @@
         }
 
         function gameLoop() {
-            // if(!gameStarted) {
-            //     return;
-            // }
+            if(!gameStarted) {
+                return;
+            }
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawPaddle(leftPaddle);
             drawPaddle(rightPaddle);
