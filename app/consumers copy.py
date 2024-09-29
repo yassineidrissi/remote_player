@@ -178,27 +178,6 @@ class PingPongConsumer(WebsocketConsumer):
             'rightScore': right_score,
         }))
 
-class PingPongConsumer(WebsocketConsumer):
-    def connect(self):
-        # Accept the WebSocket connection
-        self.accept()
-
-    def disconnect(self, close_code):
-        # Handle WebSocket disconnection
-        pass
-
-    def receive(self, text_data):
-        # Receive message from WebSocket
-        data = json.loads(text_data)
-        left_score = data['leftScore']
-        right_score = data['rightScore']
-
-        # Broadcast the updated scores to all clients
-        self.send(json.dumps({
-            'leftScore': left_score,
-            'rightScore': right_score,
-        }))
-
 class GameRoomConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_group_name = 'game_room'
@@ -213,7 +192,7 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
         # Update player count on connection
-        self.scope['player_count'] = self.scope.get('player_count', 0) + 2
+        self.scope['player_count'] = self.scope.get('player_count', 0) + 1
 
         # Broadcast player count to all clients
         await self.channel_layer.group_send(
@@ -252,18 +231,19 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
             'playerCount': player_count
         }))
 
-
 # class GameRoomConsumer(AsyncWebsocketConsumer):
 #     async def connect(self):
 #         self.user = self.scope['user']
 #         self.room_group_name = 'game_room'
+#         self.player_count = 0
         
 #         # Join the room group
 #         await self.channel_layer.group_add(
 #             self.room_group_name,
 #             self.channel_name
 #         )
-        
+#         self.player_count += 1
+
 #         # Accept WebSocket connection
 #         await self.accept()
     
