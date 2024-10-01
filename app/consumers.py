@@ -245,9 +245,12 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    # Receive messages from WebSocket (client sends score updates)
+    # Receive messages from WebSocket (client sends score and paddle updates)
     async def receive(self, text_data):
         data = json.loads(text_data)
+
+        left_paddle_move = data.get('leftPaddleMove')
+        right_paddle_move = data.get('rightPaddleMove')
         left_score = data.get('leftScore')
         right_score = data.get('rightScore')
 
@@ -261,15 +264,25 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
             }
         )
 
-    # Handler for broadcasting player count updates
-    async def player_count_update(self, event):
-        player_count = event['playerCount']
+        # Broadcast left paddle movement
+        if left_paddle_move is not None:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'paddle_move',
+                    'leftPaddleMove': left_paddle_move
+                }
+            )
 
-        # Send the player count to WebSocket clients
-        await self.send(text_data=json.dumps({
-            'playerCount': player_count
-        }))
-
+        # Broadcast right paddle movement
+        if right_paddle_move is not None:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'right_paddle_move',
+                    'rightPaddleMove': right_paddle_move
+                }
+            )
     # Handler for broadcasting score updates
     async def score_update(self, event):
         left_score = event['leftScore']
@@ -280,6 +293,115 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
             'leftScore': left_score,
             'rightScore': right_score
         }))
+
+    # Handler for broadcasting player count updates
+    async def player_count_update(self, event):
+        player_count = event['playerCount']
+
+        # Send the player count to WebSocket clients
+        await self.send(text_data=json.dumps({
+            'playerCount': player_count
+        }))
+
+
+    # Receive paddle movement from the room group
+    async def paddle_move(self, event):
+        left_paddle_move = event['leftPaddleMove']
+
+        # Send the left paddle movement to WebSocket
+        await self.send(text_data=json.dumps({
+            'leftPaddleMove': left_paddle_move
+        }))
+    # Handle right paddle movement
+    async def right_paddle_move(self, event):
+        right_paddle_move = event['rightPaddleMove']
+
+        # Send the right paddle movement to the client
+        await self.send(text_data=json.dumps({
+            'rightPaddleMove': right_paddle_move
+        }))
+
+# class GameRoomConsumer(AsyncWebsocketConsumer):
+#     player_count = 0  # Class-level variable to track the number of players
+
+#     async def connect(self):
+#         self.room_group_name = 'game_room'
+        
+#         # Add the player to the room group
+#         await self.channel_layer.group_add(
+#             self.room_group_name,
+#             self.channel_name
+#         )
+        
+#         # Increment the player count when a player connects
+#         GameRoomConsumer.player_count += 1
+        
+#         # Accept the WebSocket connection
+#         await self.accept()
+
+#         # Broadcast the updated player count to all clients in the room
+#         await self.channel_layer.group_send(
+#             self.room_group_name,
+#             {
+#                 'type': 'player_count_update',
+#                 'playerCount': GameRoomConsumer.player_count
+#             }
+#         )
+
+#     async def disconnect(self, close_code):
+#         # Decrement the player count when a player disconnects
+#         GameRoomConsumer.player_count -= 1
+
+#         # Remove the player from the room group
+#         await self.channel_layer.group_discard(
+#             self.room_group_name,
+#             self.channel_name
+#         )
+
+#         # Broadcast the updated player count to all clients in the room
+#         await self.channel_layer.group_send(
+#             self.room_group_name,
+#             {
+#                 'type': 'player_count_update',
+#                 'playerCount': GameRoomConsumer.player_count
+#             }
+#         )
+
+#     # Receive messages from WebSocket (client sends score updates)
+#     async def receive(self, text_data):
+#         data = json.loads(text_data)
+#         left_score = data.get('leftScore')
+#         right_score = data.get('rightScore')
+
+#         # Broadcast the updated scores to the room
+#         await self.channel_layer.group_send(
+#             self.room_group_name,
+#             {
+#                 'type': 'score_update',
+#                 'leftScore': left_score,
+#                 'rightScore': right_score
+#             }
+#         )
+
+#     # Handler for broadcasting player count updates
+#     async def player_count_update(self, event):
+#         player_count = event['playerCount']
+
+#         # Send the player count to WebSocket clients
+#         await self.send(text_data=json.dumps({
+#             'playerCount': player_count
+#         }))
+
+#     # Handler for broadcasting score updates
+#     async def score_update(self, event):
+#         left_score = event['leftScore']
+#         right_score = event['rightScore']
+
+#         # Send the updated scores to WebSocket clients
+#         await self.send(text_data=json.dumps({
+#             'leftScore': left_score,
+#             'rightScore': right_score
+#         }))
 
 # class GameRoomConsumer(AsyncWebsocketConsumer):
 #     async def connect(self):

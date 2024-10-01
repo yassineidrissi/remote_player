@@ -154,7 +154,26 @@
                 rightPaddle.score = data.rightScore;
                 updateScore();
             }
-
+            if (data.leftPaddleMove) {
+                if (data.leftPaddleMove === 'up') {
+                    leftPaddle.moveUp = true;
+                } else if (data.leftPaddleMove === 'down') {
+                    leftPaddle.moveDown = true;
+                } else if (data.leftPaddleMove === 'stop') {
+                    leftPaddle.moveUp = false;
+                    leftPaddle.moveDown = false;
+                }
+            }
+            if (data.rightPaddleMove){
+                if(data.rightPaddleMove === 'up'){
+                    rightPaddle.moveUp = true;
+                } else if (data.rightPaddleMove === 'down'){
+                    rightPaddle.moveDown = true;
+                } else if (data.rightPaddleMove === 'stop'){
+                    rightPaddle.moveUp = false;
+                    rightPaddle.moveDown = false;
+                }
+            }
             // Check for player count updates
             // if (data.playerCount !== undefined) {
                 console.log('Player count:', data.playerCount);
@@ -275,18 +294,56 @@
         }
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'w') leftPaddle.moveUp = true;
-            if (e.key === 's') leftPaddle.moveDown = true;
-            if (e.key === 'ArrowUp') rightPaddle.moveUp = true;
-            if (e.key === 'ArrowDown') rightPaddle.moveDown = true;
+            if (e.key === 'w') {
+                leftPaddle.moveUp = true;
+                socket.send(JSON.stringify({ 'leftPaddleMove': 'up' }));
+            }
+            if (e.key === 's') {
+                leftPaddle.moveDown = true;
+                socket.send(JSON.stringify({ 'leftPaddleMove': 'down' }));
+            }
+            if (e.key === 'ArrowUp'){
+                rightPaddle.moveUp = true;
+                socket.send(JSON.stringify({ 'rightPaddleMove': 'up' }));
+            }
+            if (e.key === 'ArrowDown'){
+                rightPaddle.moveDown = true;
+                socket.send(JSON.stringify({ 'rightPaddleMove': 'down' }));
+            }
         });
 
         document.addEventListener('keyup', (e) => {
-            if (e.key === 'w') leftPaddle.moveUp = false;
-            if (e.key === 's') leftPaddle.moveDown = false;
-            if (e.key === 'ArrowUp') rightPaddle.moveUp = false;
-            if (e.key === 'ArrowDown') rightPaddle.moveDown = false;
+            if (e.key === 'w') {
+                leftPaddle.moveUp = false;
+                socket.send(JSON.stringify({ 'leftPaddleMove': 'stop' }));
+            }
+            if (e.key === 's') {
+                leftPaddle.moveDown = false;
+                socket.send(JSON.stringify({ 'leftPaddleMove': 'stop' }));
+            }
+            if (e.key === 'ArrowUp'){
+                rightPaddle.moveUp = false;
+                socket.send(JSON.stringify({ 'rightPaddleMove': 'stop' }));
+            }
+            if (e.key === 'ArrowDown'){
+                rightPaddle.moveDown = false;
+                socket.send(JSON.stringify({ 'rightPaddleMove': 'stop' }));
+            }
         });
+
+        // document.addEventListener('keydown', (e) => {
+        //     if (e.key === 'w') leftPaddle.moveUp = true;
+        //     if (e.key === 's') leftPaddle.moveDown = true;
+        //     if (e.key === 'ArrowUp') rightPaddle.moveUp = true;
+        //     if (e.key === 'ArrowDown') rightPaddle.moveDown = true;
+        // });
+
+        // document.addEventListener('keyup', (e) => {
+        //     if (e.key === 'w') leftPaddle.moveUp = false;
+        //     if (e.key === 's') leftPaddle.moveDown = false;
+        //     if (e.key === 'ArrowUp') rightPaddle.moveUp = false;
+        //     if (e.key === 'ArrowDown') rightPaddle.moveDown = false;
+        // });
 
         // document.getElementById('multiplayerButton').addEventListener('click', () => {
         //     resetGame();
