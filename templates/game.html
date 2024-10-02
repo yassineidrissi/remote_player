@@ -128,7 +128,8 @@
 
         // let isSinglePlayer = false;
         let gameStarted = false;  // Game won't start until both players connect
-
+        var leftscore = 0;
+        var rightscore = 0;
         // Establish a WebSocket connection to the server
         var socket = new WebSocket('ws://localhost:8000/ws/game/');
 
@@ -150,8 +151,8 @@
 
             // Update the scores when the server sends new scores
             if (data.leftScore !== undefined && data.rightScore !== undefined) {
-                leftPaddle.score = data.leftScore;
-                rightPaddle.score = data.rightScore;
+                leftscore = data.leftScore;
+                rightscore = data.rightScore;
                 updateScore();
             }
             if (data.leftPaddleMove) {
@@ -191,8 +192,8 @@
         //     var data = JSON.parse(event.data);
 
         //     //update the scores when the server sends new scores
-        //     leftPaddle.score = data.leftScore;
-        //     rightPaddle.score = data.rightScore;
+        //     leftscore = data.leftScore;
+        //     rightscore = data.rightScore;
         //     updateScore();
         //                 // If we receive a player count update
         //     if (data.playerCount === 2 && !gameStarted) {
@@ -206,8 +207,8 @@
         // Send score updates to the server
         function sendScoreUpdate() {
             socket.send(JSON.stringify({
-        'leftScore': leftPaddle.score,
-        'rightScore': rightPaddle.score,
+            'leftScore': leftscore,
+            'rightScore': rightscore,
          }));
         }
         
@@ -222,9 +223,9 @@
         }
 
         function updateScore() {
-            document.getElementById('leftScore').textContent = leftPaddle.score;
-            document.getElementById('rightScore').textContent = rightPaddle.score;
-
+            document.getElementById('leftScore').textContent = leftscore;
+            document.getElementById('rightScore').textContent = rightscore;
+// 
             // sendScoreUpdate();
         }
 
@@ -259,13 +260,13 @@
             }
 
             if (ballX < 0) {
-                rightPaddle.score++;
+                rightscore++;
                 resetBall();
                 sendScoreUpdate();  // Send updated score to server
             }
 
             if (ballX > canvas.width) {
-                leftPaddle.score++;
+                leftscore++;
                 resetBall();
                 sendScoreUpdate();  // Send updated score to server
             }
@@ -355,8 +356,8 @@
         });
 
         function resetGame() {
-            leftPaddle.score = 0;
-            rightPaddle.score = 0;
+            leftscore = 0;
+            rightscore = 0;
             resetBall();
             updateScore();
         }
