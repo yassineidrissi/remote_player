@@ -249,10 +249,21 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         data = json.loads(text_data)
 
+
         left_paddle_move = data.get('leftPaddleMove')
         right_paddle_move = data.get('rightPaddleMove')
+        # if data['type'] == 'score_update':
         left_score = data.get('leftScore')
         right_score = data.get('rightScore')
+        # handle differnet message types
+        # if data['type'] == 'ball_update':
+        ballX = data.get('ballX')
+        ballY = data.get('ballY')
+        # ballSpeed = data.get('ballSpedX')
+            # Broadcast the ball position to all connected clients
+        self.send_ball_data_to_all(ballX, ballY)#, ballSpeed)
+
+
 
         # Broadcast the updated scores to the room
         await self.channel_layer.group_send(
@@ -283,6 +294,14 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                     'rightPaddleMove': right_paddle_move
                 }
             )
+
+    async def send_ball_data_to_all(self, ballX, ballY):#, ballSpeed):
+        self.send(text_data=json.dumps({
+            'type': 'ball_update',
+            'ballX': ballX,
+            'ballY': ballY,
+            # 'ballSpeed': ballSpeed
+        }))
     # Handler for broadcasting score updates
     async def score_update(self, event):
         left_score = event['leftScore']

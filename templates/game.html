@@ -150,10 +150,16 @@
             }
 
             // Update the scores when the server sends new scores
-            if (data.leftScore !== undefined && data.rightScore !== undefined) {
+            if (data.type === 'score_update' && data.leftScore !== undefined && data.rightScore !== undefined) {
                 leftscore = data.leftScore;
                 rightscore = data.rightScore;
                 updateScore();
+            }
+            if (data.type === 'ball_position') {
+            // Update the ball position based on the server's data
+                ballX = data.ballX;
+                ballY = data.ballY;
+                ballSpeedX = data.ballSpeed;
             }
             if (data.leftPaddleMove) {
                 if (data.leftPaddleMove === 'up') {
@@ -248,8 +254,12 @@
             ballX += ballSpeedX;
             ballY += ballSpeedY;
 
+            let touchWall = false;
+            let touchPaddle = false;
+
             if (ballY <= 0 || ballY >= canvas.height - ballSize) {
                 ballSpeedY = -ballSpeedY;
+                touchWall = true;
             }
 
             if (
@@ -257,6 +267,7 @@
                 (ballX + ballSize >= rightPaddle.x && ballY + ballSize >= rightPaddle.y && ballY <= rightPaddle.y + paddleHeight)
             ) {
                 ballSpeedX = -ballSpeedX;
+                touchPaddle = true;
             }
 
             if (ballX < 0) {
@@ -264,16 +275,25 @@
                 resetBall();
                 sendScoreUpdate();  // Send updated score to server
             }
-
-            if (ballX > canvas.width) {
+            else if(ballX > canvas.width) {
                 leftscore++;
                 resetBall();
                 sendScoreUpdate();  // Send updated score to server
             }
+            if(touchWall || touchPaddle)
+                sendBallDataUpdate(); // Send updated ball to websocket
 
             updateScore();  // Update the UI score
         }
 
+        function sendBallDataUpdate() {
+            socket.send(JSON.stringify({
+                'type': 'ball_update',
+                'ballX': ballX,
+                'ballY': ballY,
+                // 'ballSepeed': ballSeSpeedX
+            }));
+        }
 
         function resetBall() {
             ballX = canvas.width / 2;
@@ -352,15 +372,15 @@
         
         document.getElementById('singleplayerButton').addEventListener('click', () => {
             //!need to add link to gamesingle.html
-            resetGame();
+            // resetGame();
         });
 
-        function resetGame() {
-            leftscore = 0;
-            rightscore = 0;
-            resetBall();
-            updateScore();
-        }
+        // function resetGame() {
+        //     leftscore = 0;
+        //     rightscore = 0;
+        //     resetBall();
+        //     updateScore();
+        // }
 
         gameLoop();
     </script>
