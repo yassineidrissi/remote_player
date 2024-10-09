@@ -74,6 +74,7 @@ const BALL_SIZE = 10;
 
 let gameStarted = false;
 let isPlayerOne = false;
+let leftPlayer = false;
 
 const leftPaddle = {
     x: 0,
@@ -146,11 +147,12 @@ function handleGameState(gameState) {
         isPlayerOne = true;
         console.log(isPlayerOne);
         waitingMessage.textContent = "You are Player 1 (Left Paddle). Waiting for Player 2...";
+        leftPlayer = true;
     } else if (gameState.players === 2 && !gameStarted) {
         waitingMessage.style.display = 'none';
         isPlayerOne = true;
         gameStarted = true;
-        const playerMessage = isPlayerOne ? "You are Player 1 (Left Paddle)" : "You are Player 2 (Right Paddle)";
+        const playerMessage = leftPlayer ? "You are Player 1 (Left Paddle)" : "You are Player 2 (Right Paddle)";
         document.getElementById('roomInfo').innerHTML += `<br>${playerMessage}`;
         gameLoop();
     }
@@ -160,23 +162,62 @@ function movePaddles() {
     let leftPaddleMoved = false;
     let rightPaddleMoved = false;
 
-    if (keys.w && leftPaddle.y > 0) {
-        leftPaddle.y -= leftPaddle.speed;
-        leftPaddleMoved = true;
-    }
-    if (keys.s && leftPaddle.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
-        leftPaddle.y += leftPaddle.speed;
-        leftPaddleMoved = true;
-    }
+    if (leftPlayer)
+    {
+        if (keys.w && leftPaddle.y > 0) {
+            leftPaddle.y -= leftPaddle.speed;
+            leftPaddleMoved = true;
+        }
+        else if (keys.s && leftPaddle.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
+            leftPaddle.y += leftPaddle.speed;
+            leftPaddleMoved = true;
+        }
+        else if (keys.ArrowUp && leftPaddle.y > 0) {
+            leftPaddle.y -= leftPaddle.speed;
+            leftPaddleMoved = true;
+        }
+        else if (keys.ArrowDown && leftPaddle.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
+            leftPaddle.y += leftPaddle.speed;
+            leftPaddleMoved = true;
+        }
 
-    if (keys.ArrowUp && rightPaddle.y > 0) {
-        rightPaddle.y -= rightPaddle.speed;
-        rightPaddleMoved = true;
     }
-    if (keys.ArrowDown && rightPaddle.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
-        rightPaddle.y += rightPaddle.speed;
-        rightPaddleMoved = true;
+    else
+    {
+        if (keys.w && rightPaddle.y > 0) {
+            rightPaddle.y -= rightPaddle.speed;
+            rightPaddleMoved = true;
+        }
+        else if (keys.s && rightPaddle.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
+            rightPaddle.y += rightPaddle.speed;
+            rightPaddleMoved = true;
+        }
+        else if (keys.ArrowUp && rightPaddle.y > 0) {
+            rightPaddle.y -= rightPaddle.speed;
+            rightPaddleMoved = true;
+        }
+        else if (keys.ArrowDown && rightPaddle.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
+            rightPaddle.y += rightPaddle.speed;
+            rightPaddleMoved = true;
+        }
     }
+    // if (keys.w && leftPaddle.y > 0) {
+    //     leftPaddle.y -= leftPaddle.speed;
+    //     leftPaddleMoved = true;
+    // }
+    // if (keys.s && leftPaddle.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
+    //     leftPaddle.y += leftPaddle.speed;
+    //     leftPaddleMoved = true;
+    // }
+
+    // if (keys.ArrowUp && rightPaddle.y > 0) {
+    //     rightPaddle.y -= rightPaddle.speed;
+    //     rightPaddleMoved = true;
+    // }
+    // if (keys.ArrowDown && rightPaddle.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
+    //     rightPaddle.y += rightPaddle.speed;
+    //     rightPaddleMoved = true;
+    // }
 
     if (leftPaddleMoved) {
         sendPaddleMove(leftPaddle, 'left');
