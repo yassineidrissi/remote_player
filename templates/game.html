@@ -54,6 +54,7 @@
     </div>
     <canvas id="gameCanvas" width="800" height="400"></canvas>
     <div id="waitingMessage">Waiting for another player...</div>
+    <div id="winerinfo">Winer Is: <span id ="winer"></span></div>
     <div id="roomInfo">Room: <span id="roomName"></span></div>
     <button id="resetButton">Reset Game</button>
 
@@ -75,6 +76,7 @@ const BALL_SIZE = 10;
 let gameStarted = false;
 let isPlayerOne = false;
 let leftPlayer = false;
+let Winer = 0;
 
 const leftPaddle = {
     x: 0,
@@ -238,7 +240,16 @@ function sendPaddleMove(paddle, side) {
 }
 
 function gameLoop() {
-    if (!gameStarted) {
+    if (!gameStarted || leftPaddle.score >= 5 || rightPaddle.score >= 5) {
+        if (leftPaddle.score >= 5)
+            Winer = "left";
+        else if (rightPaddle.score >= 5)
+            Winer = "right";
+        if (winer)
+        {
+            document.getElementById('winer').textContent = Winer;
+            document.getElementById('winerinfo').style.display = 'block';
+        }
         return;
     }
     movePaddles();
