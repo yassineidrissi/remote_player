@@ -2,6 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from asgiref.sync import sync_to_async
+from .pong_ql import AI 
 from channels.generic.websocket import WebsocketConsumer
 # from .models import Room, Player
 
@@ -286,6 +287,47 @@ class GameRoomConsumer(AsyncWebsocketConsumer):
                 'left_paddle_y': self.rooms[self.room_group_name]['left_paddle_y'],
                 'right_paddle_y': self.rooms[self.room_group_name]['right_paddle_y'],
             }
+        }))
+
+class PongAIConsumer(WebsocketConsumer):
+    def connect(self):
+        self.accept()
+        # Initialize AI and game state
+        self.ai = AI()
+        self.game_state = {
+            'left_paddle_y': 200,
+            'right_paddle_y': 200,  # AI's paddle
+            'ball_position': {'x': 400, 'y': 200},
+            'left_score': 0,
+            'right_score': 0
+        }
+        self.send_game_state()
+
+    def receive(self, text_data):
+        data = json.loads(text_data)
+        if data['type'] == 'paddle_move':
+            self.handle_paddle_move(data['player'], data['y'])
+        self.update_ball_position()
+        self.update_ai_position()  # Make the AI move
+        self.send_game_state()
+
+    def handle_paddle_move(self, player, y):
+        if player == 'left':
+            self.game_state['left_paddle_y'] = y
+
+    def update_ball_position(self):
+        # Your logic for moving the ball
+        ball = self.game_state['ball_position']
+        ball['x'] += 5  # Ball movement logic
+
+    def update_ai_position(self):
+        # Use AI to move the right paddle
+        ai_move = self.ai.decide_move(self.game_state['ball_position'])
+        self.game_state['right_paddle_y'] = ai_move
+
+    def send_game_state(self):
+        self.send(text_data=json.dumps({
+            'game_state': self.game_state
         }))
 # class GameRoomConsumer(AsyncWebsocketConsumer):
 #     player_count = 0  # Class-level variable to track the number of players

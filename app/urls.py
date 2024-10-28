@@ -14,5 +14,6 @@ urlpatterns = [
     path('tournament/<str:room_name>/', views.tournament, name='tournament'),
     path('game/', views.index, name='index'),
     path('game/room1/', views.index, name='index'),
+    path('game/ai', views.game_ai, name='game_ai'),  # Add this line for the AI game route
 
 ]

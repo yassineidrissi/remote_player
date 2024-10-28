@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Learning Pong</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+        }
+        #controls {
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="pongCanvas" width="840" height="600"></canvas>
+    <div id="controls">
+        <button id="startTraining">Start Training</button>
+        <button id="stopTraining">Stop Training</button>
+        <button id="playGame">Play Game</button>
+    </div>
+    <div id="stats">
+        <p>Episode: <span id="episode">0</span></p>
+        <p>Epsilon: <span id="epsilon">1.00</span></p>
+        <p>Score A: <span id="scoreA">0</span></p>
+        <p>Score B: <span id="scoreB">0</span></p>
+    </div>
+    <script>
+// Constants
+const WIDTH = 840;
+const HEIGHT = 600;
+const PDL_WIDTH = 10;
+const PDL_HEIGHT = 100;
+const BALL_RADIUS = 10;
+const PDL_SPEED = 10;
+const SIMPLE_AI_SPEED = 7;
+const FPS = 60;
+
+// Q-learning parameters
+const ALPHA = 0.4;
+const GAMMA = 0.7;
+const EPSILON_DECAY = 0.00001;
+const EPSILON_MIN = 0.01;
+
+class Ball {
+    constructor() {
+        this.reset();
+    }
+
+    reset() {
+        this.x = WIDTH / 2;
+        this.y = HEIGHT / 2;
+        this.velocity = {
+            x: Math.random() < 0.5 ? -3 : 3,
+            y: Math.random() * 8 - 4
+        };
+    }
+
+    update() {
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+
+        if (this.y < BALL_RADIUS || this.y > HEIGHT - BALL_RADIUS) {
+            this.velocity.y *= -1;
+        }
+    }
+
+    bounce() {
+        this.velocity.x *= -1;
+        this.velocity.y = Math.random() * 8 - 4;
+    }
+}
+
+class Paddle {
+    constructor(x, isAI = false) {
+        this.x = x;
+        this.y = (HEIGHT - PDL_HEIGHT) / 2;
+        this.isAI = isAI;
+        this.score = 0;
+        this.qTable = {};
+        this.epsilon = 1;
+    }
+
+    moveUp() {
+        this.y = Math.max(0, this.y - PDL_SPEED);
+    }
+
+    moveDown() {
+        this.y = Math.min(HEIGHT - PDL_HEIGHT, this.y + PDL_SPEED);
+    }
+
+    simpleAI(ballY) {
+        if (ballY + BALL_RADIUS > this.y + PDL_HEIGHT / 2) {
+            this.moveDown();
+        } else if (ballY + BALL_RADIUS < this.y + PDL_HEIGHT / 2) {
+            this.moveUp();
+        }
+    }
+
+    getAction(state) {
+        if (!(state in this.qTable)) {
+            this.qTable[state] = [0, 0, 0];
+        }
+
+        if (Math.random() < this.epsilon) {
+            return Math.floor(Math.random() * 3);
+        } else {
+            return this.qTable[state].indexOf(Math.max(...this.qTable[state]));
+        }
+    }
+
+    updateQTable(state, action, reward, nextState) {
+        if (!(nextState in this.qTable)) {
+            this.qTable[nextState] = [0, 0, 0];
+        }
+
+        const tdTarget = reward + GAMMA * Math.max(...this.qTable[nextState]);
+        const tdError = tdTarget - this.qTable[state][action];
+        this.qTable[state][action] += ALPHA * tdError;
+    }
+
+    epsilonGreedy() {
+        this.epsilon = Math.max(EPSILON_MIN, this.epsilon * (1 - EPSILON_DECAY));
+    }
+}
+
+class Game {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.ball = new Ball();
+        this.paddleA = new Paddle(0);
+        this.paddleB = new Paddle(WIDTH - PDL_WIDTH, true);
+        this.isTraining = false;
+        this.episode = 0;
+    }
+
+    reset() {
+        this.ball.reset();
+        this.paddleA.y = (HEIGHT - PDL_HEIGHT) / 2;
+        this.paddleB.y = (HEIGHT - PDL_HEIGHT) / 2;
+        this.paddleA.score = 0;
+        this.paddleB.score = 0;
+    }
+
+    distillState() {
+        if (this.paddleA.y - BALL_RADIUS <= this.ball.y && this.ball.y <= this.paddleA.y + PDL_HEIGHT + BALL_RADIUS) {
+            return 0;
+        } else if (this.ball.y < this.paddleA.y) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
+
+    getReward() {
+        const maxReward = PDL_HEIGHT / 2;
+        const yDistance = Math.abs(this.paddleA.y + PDL_HEIGHT / 2 - this.ball.y);
+        let reward = -(yDistance / HEIGHT) * maxReward;
+
+        if (yDistance < PDL_HEIGHT / 2) {
+            reward += maxReward;
+        }
+
+        return Math.max(-maxReward, reward);
+    }
+
+    update() {
+        this.ball.update();
+
+        // Paddle A (Q-learning)
+        if (this.isTraining) {
+            const state = this.distillState();
+            const action = this.paddleA.getAction(state);
+
+            if (action === 1) {
+                this.paddleA.moveUp();
+            } else if (action === 2) {
+                this.paddleA.moveDown();
+            }
+
+            const reward = this.getReward();
+            const nextState = this.distillState();
+            this.paddleA.updateQTable(state, action, reward, nextState);
+            this.paddleA.epsilonGreedy();
+        }
+
+        // Paddle B (Simple AI)
+        this.paddleB.simpleAI(this.ball.y);
+
+        // Ball collision with paddles
+        if (
+            this.ball.x - BALL_RADIUS <= PDL_WIDTH &&
+            this.ball.y >= this.paddleA.y &&
+            this.ball.y <= this.paddleA.y + PDL_HEIGHT
+        ) {
+            this.ball.bounce();
+        }
+
+        if (
+            this.ball.x + BALL_RADIUS >= WIDTH - PDL_WIDTH &&
+            this.ball.y >= this.paddleB.y &&
+            this.ball.y <= this.paddleB.y + PDL_HEIGHT
+        ) {
+            this.ball.bounce();
+        }
+
+        // Score update
+        if (this.ball.x < 0) {
+            this.paddleB.score++;
+            this.ball.reset();
+        } else if (this.ball.x > WIDTH) {
+            this.paddleA.score++;
+            this.ball.reset();
+        }
+    }
+
+    draw() {
+        this.ctx.fillStyle = 'white';
+        this.ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        this.ctx.fillStyle = 'black';
+        this.ctx.beginPath();
+        this.ctx.arc(this.ball.x, this.ball.y, BALL_RADIUS, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillRect(this.paddleA.x, this.paddleA.y, PDL_WIDTH, PDL_HEIGHT);
+        this.ctx.fillRect(this.paddleB.x, this.paddleB.y, PDL_WIDTH, PDL_HEIGHT);
+
+        this.ctx.font = '48px Arial';
+        this.ctx.fillText(this.paddleA.score, WIDTH / 4, 50);
+        this.ctx.fillText(this.paddleB.score, 3 * WIDTH / 4, 50);
+    }
+
+    startTraining() {
+        this.isTraining = true;
+        this.trainingLoop();
+    }
+
+    stopTraining() {
+        this.isTraining = false;
+    }
+
+    trainingLoop() {
+        if (!this.isTraining) return;
+
+        this.update();
+        this.draw();
+        this.episode++;
+
+        if (this.paddleA.score >= 5 || this.paddleB.score >= 5) {
+            this.reset();
+        }
+
+        document.getElementById('episode').textContent = this.episode;
+        document.getElementById('epsilon').textContent = this.paddleA.epsilon.toFixed(2);
+        document.getElementById('scoreA').textContent = this.paddleA.score;
+        document.getElementById('scoreB').textContent = this.paddleB.score;
+
+        requestAnimationFrame(() => this.trainingLoop());
+    }
+
+    playGame() {
+        this.isTraining = false;
+        this.gameLoop();
+    }
+
+    gameLoop() {
+        this.update();
+        this.draw();
+
+        if (this.paddleA.score >= 11 || this.paddleB.score >= 11) {
+            alert(`Game Over! ${this.paddleA.score > this.paddleB.score ? 'Player A' : 'Player B'} wins!`);
+            this.reset();
+            return;
+        }
+
+        document.getElementById('scoreA').textContent = this.paddleA.score;
+        document.getElementById('scoreB').textContent = this.paddleB.score;
+
+        requestAnimationFrame(() => this.gameLoop());
+    }
+}
+
+// Initialize the game
+const canvas = document.getElementById('pongCanvas');
+const game = new Game(canvas);
+
+// Event listeners for buttons
+document.getElementById('startTraining').addEventListener('click', () => game.startTraining());
+document.getElementById('stopTraining').addEventListener('click', () => game.stopTraining());
+document.getElementById('playGame').addEventListener('click', () => game.playGame());
+</script>
+</body>
+</html>

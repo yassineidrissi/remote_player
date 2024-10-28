@@ -174,6 +174,9 @@ def tournament(request, room_name):
 		players = []
 	return render(request, 'tournament.html', {'players': players, 'room_name': room_name})
 
+def game_ai(request):
+    return render(request, 'game_ai.html')  # Render the game_ai.html template
+
 # def join_room(request, room_id):
 # 	username = request.session['username']
 # 	if not username:
